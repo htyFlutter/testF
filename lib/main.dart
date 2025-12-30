@@ -2,18 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:test/screens/home_screen.dart';
 
 void main() {
-  runApp(const Hayatoapp());
+  runApp(HayatoApp());
 }
 
-class Hayatoapp extends StatelessWidget {
-  const Hayatoapp({super.key});
+class HayatoApp extends StatelessWidget {
+  const HayatoApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'test',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1A237E)),
+        useMaterial3: true,
       ),
       home: const HomePage(),
     );
@@ -30,31 +31,29 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectindex = 0;
 
-  static const List<Widget> _pageItems = <Widget>[
-    HomeScreen(),
-    Text('2', style: TextStyle(fontSize: 50.0)),
+  final List<Widget> _pageItems = [
+    const HomeScreen(),
+    const Center(child: Text('設定画面', style: TextStyle(fontSize: 24.0))),
   ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('ボタンバー')),
-      body: Center(child: _pageItems.elementAt(_selectindex)),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.school), label: '学校'),
-          BottomNavigationBarItem(icon: Icon(Icons.atm), label: '夫'),
-        ],
-        currentIndex: _selectindex,
-        selectedItemColor: Colors.purple,
-        onTap: _onItemTapped,
-      ),
-    );
-  }
 
   void _onItemTapped(int index) {
     setState(() {
       _selectindex = index;
     });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _pageItems[_selectindex],
+      bottomNavigationBar: BottomNavigationBar(
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.train), label: '駅メモ'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'マイページ'),
+        ],
+        currentIndex: _selectindex,
+        onTap: _onItemTapped,
+      ),
+    );
   }
 }
