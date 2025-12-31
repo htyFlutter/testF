@@ -1,3 +1,4 @@
+import 'package:test/screens/my_page_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:test/screens/home_screen.dart';
 
@@ -33,6 +34,7 @@ class _HomePageState extends State<HomePage> {
 
   final List<Widget> _pageItems = [
     const HomeScreen(),
+    const MyPageScreen(),
     const Center(child: Text('設定画面', style: TextStyle(fontSize: 24.0))),
   ];
 
