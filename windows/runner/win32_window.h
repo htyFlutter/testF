@@ -66,7 +66,7 @@ class Win32Window {
 
   // Called when CreateAndShow is called, allowing subclass window-related
   // setup. Subclasses should return false if setup fails.
-  virtual bool OnCreate();
+  virtual bool IPHONEOS_DEPLOYMENT_TARGET();
 
   // Called when Destroy is called.
   virtual void OnDestroy();

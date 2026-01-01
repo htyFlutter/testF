@@ -1,7 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:test/database_helper.dart';
 
-class MyPageScreen extends StatelessWidget {
+class MyPageScreen extends StatefulWidget {
   const MyPageScreen({super.key});
+
+  @override
+  State<MyPageScreen> createState() => _MyPageScreenState();
+}
+
+class _MyPageScreenState extends State<MyPageScreen> {
+  int _stationCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCount();
+  }
+
+  Future<void> _loadCount() async {
+    final count = await DatabaseHelper.instance.getStationCount();
+    setState(() {
+      _stationCount = count;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -11,7 +32,7 @@ class MyPageScreen extends StatelessWidget {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: Color(0xFF1A237E),
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(30),
@@ -36,7 +57,7 @@ class MyPageScreen extends StatelessWidget {
                 ),
                 const Text(
                   'LoStation 開発者',
-                  style: TextStyle(fontSize: 24, color: Colors.white70),
+                  style: TextStyle(fontSize: 14, color: Colors.white70),
                 ),
               ],
             ),
@@ -48,22 +69,12 @@ class MyPageScreen extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildStatCard('訪れた駅', '1', Icons.train),
-                _buildStatCard('写真集', '1', Icons.photo_library),
+                _buildStatCard('訪れた駅', '$_stationCount', Icons.train),
+                _buildStatCard('写真集', '$_stationCount', Icons.photo_library),
               ],
             ),
           ),
-
           const SizedBox(height: 20),
-
-          ListTile(
-            leading: const Icon(Icons.settings),
-            title: const Text('設定'),
-            trailing: const Icon(Icons.arrow_back_ios, size: 16),
-            onTap: () {},
-          ),
-
-          const Divider(),
           ListTile(
             leading: const Icon(Icons.info_outline),
             title: const Text('このアプリについて'),
@@ -74,7 +85,7 @@ class MyPageScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(String lavel, String value, IconData icon) {
+  Widget _buildStatCard(String label, String value, IconData icon) {
     return Column(
       children: [
         Icon(icon, color: const Color(0xFF1A237E)),
@@ -83,7 +94,7 @@ class MyPageScreen extends StatelessWidget {
           value,
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
-        Text(lavel, style: const TextStyle(color: Colors.grey)),
+        Text(label, style: const TextStyle(color: Colors.grey)),
       ],
     );
   }

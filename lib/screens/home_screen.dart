@@ -1,3 +1,5 @@
+import 'package:apple_maps_flutter/apple_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,12 +10,16 @@ class StationMemo {
   final String station;
   final String memo;
   final String? imagePath;
+  final double latitude;
+  final double longitude;
 
   StationMemo({
     this.id,
     required this.station,
     required this.memo,
     this.imagePath,
+    required this.latitude,
+    required this.longitude,
   });
 
   factory StationMemo.fromMap(Map<String, dynamic> map) {
@@ -22,6 +28,8 @@ class StationMemo {
       station: map['station'],
       memo: map['memo'],
       imagePath: map['imagePath'],
+      latitude: map['latitude'] ?? 0.0,
+      longitude: map['longitude'] ?? 0.0,
     );
   }
 }
@@ -36,6 +44,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _stationController = TextEditingController();
   final TextEditingController _memoController = TextEditingController();
+  String _locationMessage = "緯度・軽度はまだ取得していません。";
+  double _lat = 35.6812;
+  double _lng = 139.7671;
+  AppleMapController? _mapController;
+  Set<Annotation> _annotations = {};
 
   List<StationMemo> _memoList = [];
   File? _selectedImage;
@@ -47,10 +60,57 @@ class _HomeScreenState extends State<HomeScreen> {
     _refreshJourneys();
   }
 
+  Future<void> _getCurrentLocation() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return;
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) return;
+    }
+
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+
+    setState(() {
+      _locationMessage = "緯度: $_lat, 経度: $_lng";
+      _lat = position.latitude;
+      _lng = position.longitude;
+
+      _annotations = {
+        Annotation(
+          annotationId: AnnotationId('current_location'),
+          position: LatLng(_lat, _lng),
+          infoWindow: const InfoWindow(title: '現在地', snippet: 'ここにいるよ！'),
+        ),
+      };
+    });
+
+    _mapController?.animateCamera(CameraUpdate.newLatLng(LatLng(_lat, _lng)));
+  }
+
   Future<void> _refreshJourneys() async {
     final data = await DatabaseHelper.instance.queryAllStations();
     setState(() {
       _memoList = data.map((item) => StationMemo.fromMap(item)).toList();
+    });
+  }
+
+  void _updateMarkers() {
+    setState(() {
+      _annotations.clear();
+
+      for (var memo in _memoList) {
+        _annotations.add(
+          Annotation(
+            annotationId: AnnotationId(memo.id.toString()),
+            position: LatLng(_lat, _lng),
+            infoWindow: InfoWindow(title: memo.station, snippet: memo.memo),
+          ),
+        );
+      }
     });
   }
 
@@ -72,7 +132,8 @@ class _HomeScreenState extends State<HomeScreen> {
         'memo': _memoController.text,
         'imagePath': _selectedImage?.path,
       });
-      _refreshJourneys();
+      await _refreshJourneys();
+      _updateMarkers();
     }
   }
 
@@ -87,6 +148,12 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.all(20.0),
       child: Column(
         children: [
+          Text(_locationMessage),
+          ElevatedButton.icon(
+            onPressed: _getCurrentLocation,
+            icon: const Icon(Icons.location_on),
+            label: const Text('現在地を取得'),
+          ),
           TextField(
             controller: _stationController,
             decoration: const InputDecoration(labelText: '駅名を保存'),
@@ -130,6 +197,23 @@ class _HomeScreenState extends State<HomeScreen> {
           const Divider(height: 40),
 
           Expanded(
+            flex: 1,
+            child: AppleMap(
+              initialCameraPosition: CameraPosition(
+                target: LatLng(_lat, _lng),
+                zoom: 14.0,
+              ),
+              annotations: _annotations,
+              myLocationEnabled: true,
+              onMapCreated: (AppleMapController controller) {
+                _mapController = controller;
+              },
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          Expanded(
+            flex: 1,
             child: _memoList.isEmpty
                 ? const Center(child: Text('まだメモがありません。'))
                 : ListView.builder(

@@ -27,6 +27,8 @@ class DatabaseHelper {
           station TEXT NOT NULL,
           memo TEXT,
           imagePath TEXT
+          latitude REAL,
+          longitude REAL
           )
         ''');
       },
@@ -46,5 +48,13 @@ class DatabaseHelper {
   Future<int> deleteStation(int id) async {
     final db = await instance.database;
     return await db.delete('stations', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> getStationCount() async {
+    final db = await instance.database;
+    return Sqflite.firstIntValue(
+          await db.rawQuery('SELECT COUNT(*) FROM stations'),
+        ) ??
+        0;
   }
 }
